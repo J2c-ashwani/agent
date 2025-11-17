@@ -1,8 +1,6 @@
 import NextAuth from "next-auth"
 import type { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
-import { compare } from "bcryptjs"
-import { getDatabase } from "@/lib/mongodb"
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -13,18 +11,37 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null
+        if (!credentials?.email || !credentials?.password) {
+          console.log('[Auth] Missing credentials')
+          return null
+        }
 
         try {
+          // Dynamic imports to avoid build-time errors
+          const { getDatabase } = await import('@/lib/mongodb')
+          const { compare } = await import('bcryptjs')
+          
           const db = await getDatabase()
           const user = await db.collection('agents').findOne({ 
             email: credentials.email 
           })
 
-          if (!user) return null
+          console.log('[Auth] User lookup:', user ? 'Found' : 'Not found', credentials.email)
+
+          if (!user) {
+            console.log('[Auth] User not found in database')
+            return null
+          }
 
           const isValid = await compare(credentials.password, user.password)
-          if (!isValid) return null
+          console.log('[Auth] Password valid:', isValid)
+
+          if (!isValid) {
+            console.log('[Auth] Invalid password')
+            return null
+          }
+
+          console.log('[Auth] Login successful:', user.email, user.role)
 
           return {
             id: user._id.toString(),
@@ -33,7 +50,7 @@ export const authOptions: NextAuthOptions = {
             role: user.role,
           }
         } catch (error) {
-          console.error('Auth error:', error)
+          console.error('[Auth] Error during authentication:', error)
           return null
         }
       },
@@ -52,6 +69,7 @@ export const authOptions: NextAuthOptions = {
   },
   session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
   secret: process.env.NEXTAUTH_SECRET,
+  debug: true, // Enable debug mode
 }
 
 const handler = NextAuth(authOptions)
