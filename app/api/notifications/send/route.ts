@@ -1,0 +1,61 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { Resend } from 'resend'
+
+const resend = new Resend(process.env.RESEND_API_KEY)
+
+export async function POST(request: NextRequest) {
+  try {
+    const { to, subject, template, data } = await request.json()
+
+    let htmlContent = ''
+
+    if (template === 'student_uploaded') {
+      htmlContent = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #1e40af;">New Student Application Uploaded</h2>
+          <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <p><strong>Application ID:</strong> ${data.applicationId}</p>
+            <p><strong>Agent:</strong> ${data.agentEmail}</p>
+            <p><strong>Student Name:</strong> ${data.studentName}</p>
+            <p><strong>Email:</strong> ${data.email}</p>
+            <p><strong>Phone:</strong> ${data.phone}</p>
+            <p><strong>Preferred Country:</strong> ${data.country}</p>
+            <p><strong>Course Interest:</strong> ${data.course}</p>
+            <p><strong>Document:</strong> ${data.fileName}</p>
+          </div>
+          <p style="color: #6b7280;">Please review this application in the admin portal.</p>
+        </div>
+      `
+    } else if (template === 'status_updated') {
+      htmlContent = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #1e40af;">Application Status Updated</h2>
+          <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <p><strong>Application ID:</strong> ${data.applicationId}</p>
+            <p><strong>Student Name:</strong> ${data.studentName}</p>
+            <p><strong>New Status:</strong> <span style="color: #10b981; font-weight: bold;">${data.status}</span></p>
+            ${data.adminNotes ? `<p><strong>Admin Notes:</strong> ${data.adminNotes}</p>` : ''}
+          </div>
+          <p style="color: #6b7280;">Login to your agent portal to view full details.</p>
+        </div>
+      `
+    }
+
+    const { data: emailData, error } = await resend.emails.send({
+      from: 'Join2Campus <noreply@join2campus.com>',
+      to,
+      subject,
+      html: htmlContent,
+    })
+
+    if (error) {
+      console.error('[Email] Error:', error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    return NextResponse.json({ success: true, data: emailData })
+  } catch (error) {
+    console.error('[Email] Error:', error)
+    return NextResponse.json({ error: 'Failed to send email' }, { status: 500 })
+  }
+}
