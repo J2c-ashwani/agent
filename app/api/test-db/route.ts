@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server'
-import { getDatabase } from '@/lib/mongodb'
+
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 export async function GET() {
   try {
+    const { getDatabase } = await import('@/lib/mongodb')
     const db = await getDatabase()
     
     // Test the connection

@@ -1,9 +1,14 @@
 import { NextResponse } from 'next/server'
-import { getDatabase } from '@/lib/mongodb'
-import { hash } from 'bcryptjs'
+
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 export async function GET() {
   try {
+    // Import dependencies only at runtime
+    const { getDatabase } = await import('@/lib/mongodb')
+    const { hash } = await import('bcryptjs')
+    
     const db = await getDatabase()
     
     // Drop existing collections if they exist (for clean setup)
