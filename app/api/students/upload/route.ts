@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { MongoClient } from 'mongodb'
-import { createSheetsClient } from '@/lib/google-sheets'
+import { getDatabase } from '@/lib/mongodb'
 
 export async function POST(request: NextRequest) {
   try {
@@ -51,8 +50,7 @@ export async function POST(request: NextRequest) {
     const fileBuffer = Buffer.from(await file.arrayBuffer())
 
     // Save to MongoDB
-    const client = await MongoClient.connect(process.env.MONGODB_URI!)
-    const db = client.db()
+    const db = await getDatabase()
     
     const studentDoc = {
       applicationId,
@@ -74,52 +72,54 @@ export async function POST(request: NextRequest) {
     }
 
     await db.collection('students').insertOne(studentDoc)
-    await client.close()
 
-    // Append to Google Sheets
-    try {
-      const sheetsClient = createSheetsClient()
-      await sheetsClient.appendStudent({
-        applicationId,
-        agentEmail: session.user.email,
-        studentName,
-        email,
-        phone,
-        country: preferredCountry,
-        course: courseInterest,
-        status: 'Pending',
-        adminNotes: '',
-        lastUpdated: new Date().toISOString(),
-      })
-    } catch (error) {
-      console.error('Google Sheets error:', error)
-      // Continue even if Sheets fails
+    // Append to Google Sheets (optional - only if configured)
+    if (process.env.GOOGLE_SHEET_ID) {
+      try {
+        const { createSheetsClient } = await import('@/lib/google-sheets')
+        const sheetsClient = createSheetsClient()
+        await sheetsClient.appendStudent({
+          applicationId,
+          agentEmail: session.user.email,
+          studentName,
+          email,
+          phone,
+          country: preferredCountry,
+          course: courseInterest,
+          status: 'Pending',
+          adminNotes: '',
+          lastUpdated: new Date().toISOString(),
+        })
+      } catch (error) {
+        console.error('Google Sheets error:', error)
+      }
     }
 
-    // Send email notification to admin
-    try {
-      await fetch(`${process.env.NEXTAUTH_URL}/api/notifications/send`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: process.env.NEXT_PUBLIC_ADMIN_EMAIL,
-          subject: `New Student Application - ${applicationId}`,
-          template: 'student_uploaded',
-          data: {
-            applicationId,
-            agentEmail: session.user.email,
-            studentName,
-            email,
-            phone,
-            country: preferredCountry,
-            course: courseInterest,
-            fileName: file.name,
-          },
-        }),
-      })
-    } catch (error) {
-      console.error('Email notification error:', error)
-      // Continue even if email fails
+    // Send email notification (optional - only if configured)
+    if (process.env.RESEND_API_KEY && process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
+      try {
+        await fetch(`${process.env.NEXTAUTH_URL}/api/notifications/send`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: process.env.NEXT_PUBLIC_ADMIN_EMAIL,
+            subject: `New Student Application - ${applicationId}`,
+            template: 'student_uploaded',
+            data: {
+              applicationId,
+              agentEmail: session.user.email,
+              studentName,
+              email,
+              phone,
+              country: preferredCountry,
+              course: courseInterest,
+              fileName: file.name,
+            },
+          }),
+        })
+      } catch (error) {
+        console.error('Email notification error:', error)
+      }
     }
 
     return NextResponse.json(
