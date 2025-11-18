@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(request: NextRequest) {
   try {
     const { to, subject, template, data } = await request.json()
 
-    // Check if Resend API key is configured
     if (!process.env.RESEND_API_KEY) {
       console.log('[Email] Resend API key not configured, skipping email')
       return NextResponse.json({ 
@@ -14,13 +15,24 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Dynamically import Resend only if API key exists
     const { Resend } = await import('resend')
     const resend = new Resend(process.env.RESEND_API_KEY)
 
     let htmlContent = ''
 
-    if (template === 'student_uploaded') {
+    if (template === 'agent_status_changed') {
+      htmlContent = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #1e40af;">Account Status Update</h2>
+          <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <p>Hello <strong>${data.name}</strong>,</p>
+            <p style="margin: 20px 0; font-size: 16px;">${data.message}</p>
+            <p><strong>New Status:</strong> <span style="color: ${data.status === 'active' ? '#10b981' : '#ef4444'}; font-weight: bold; text-transform: uppercase;">${data.status}</span></p>
+          </div>
+          <p style="color: #6b7280;">If you have any questions, please contact our support team.</p>
+        </div>
+      `
+    } else if (template === 'student_uploaded') {
       htmlContent = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #1e40af;">New Student Application Uploaded</h2>
@@ -65,7 +77,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true, data: emailData })
-  } catch (error) {
+  } catch (error: any) {
     console.error('[Email] Error:', error)
     return NextResponse.json({ error: 'Failed to send email' }, { status: 500 })
   }

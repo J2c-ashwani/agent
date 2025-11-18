@@ -8,7 +8,6 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
-    // Only admins can list agents
     if (!session || (session.user as any).role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -33,6 +32,8 @@ export async function GET(request: NextRequest) {
         status: a.status,
         totalApplications: a.totalApplications || 0,
         acceptedApplications: a.acceptedApplications || 0,
+        commission: a.commission || 0,
+        lastLogin: a.lastLogin || null,
         createdAt: a.createdAt,
       }))
     })
