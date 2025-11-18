@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts"
+import Link from "next/link"
 
 const statsData = [
   { month: "Jan", agents: 4, applications: 120, accepted: 45 },
@@ -93,26 +94,29 @@ export default function AdminDashboard() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <a href="/admin/applications" className="p-4 border rounded-lg hover:bg-purple-50 hover:border-purple-500 transition cursor-pointer">
+            <Link href="/admin/applications" className="p-4 border rounded-lg hover:bg-purple-50 hover:border-purple-500 transition cursor-pointer block">
               <div className="text-3xl mb-2">📋</div>
               <h3 className="font-semibold mb-1">All Applications</h3>
               <p className="text-sm text-gray-600">Review 1,112 applications from all agents</p>
-            </a>
-            <a href="/admin/agents" className="p-4 border rounded-lg hover:bg-purple-50 hover:border-purple-500 transition cursor-pointer">
+            </Link>
+            
+            <Link href="/admin/agents" className="p-4 border rounded-lg hover:bg-purple-50 hover:border-purple-500 transition cursor-pointer block">
               <div className="text-3xl mb-2">👥</div>
               <h3 className="font-semibold mb-1">Manage Agents</h3>
               <p className="text-sm text-gray-600">View and manage 45 partner agents</p>
-            </a>
-            <a href="/admin/settings" className="p-4 border rounded-lg hover:bg-purple-50 hover:border-purple-500 transition cursor-pointer">
+            </Link>
+            
+            <Link href="/admin/settings" className="p-4 border rounded-lg hover:bg-purple-50 hover:border-purple-500 transition cursor-pointer block">
               <div className="text-3xl mb-2">⚙️</div>
               <h3 className="font-semibold mb-1">System Settings</h3>
               <p className="text-sm text-gray-600">Configure global parameters</p>
-            </a>
-            <a href="/dashboard/universities" className="p-4 border rounded-lg hover:bg-purple-50 hover:border-purple-500 transition cursor-pointer">
+            </Link>
+            
+            <Link href="/admin/universities" className="p-4 border rounded-lg hover:bg-purple-50 hover:border-purple-500 transition cursor-pointer block">
               <div className="text-3xl mb-2">🎓</div>
               <h3 className="font-semibold mb-1">Partner Universities</h3>
               <p className="text-sm text-gray-600">Manage 217+ university partnerships</p>
-            </a>
+            </Link>
           </div>
         </CardContent>
       </Card>
