@@ -1,108 +1,118 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts"
-
-const agentData = [
-  { month: "Jan", uploaded: 32 },
-  { month: "Feb", uploaded: 41 },
-  { month: "Mar", uploaded: 35 },
-  { month: "Apr", uploaded: 48 },
-  { month: "May", uploaded: 42 },
-  { month: "Jun", uploaded: 54 },
-]
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { FileText, Users, CheckCircle, Clock } from "lucide-react"
 
 export default function DashboardPage() {
   const { data: session } = useSession()
+  const [mounted, setMounted] = useState(false)
+  const [stats, setStats] = useState({
+    totalApplications: 0,
+    pending: 0,
+    accepted: 0,
+    underReview: 0,
+  })
+
+  useEffect(() => {
+    setMounted(true)
+    // TODO: Fetch real stats from API
+  }, [])
+
+  if (!mounted) {
+    return (
+      <div className="p-8">
+        <div className="h-32 bg-gray-100 animate-pulse rounded" />
+      </div>
+    )
+  }
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-8 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Agent Dashboard</h1>
-        <p className="text-gray-600">Welcome back, {session?.user?.name || "Agent"}!</p>
-        <p className="text-sm text-gray-500 mt-1">Email: {session?.user?.email}</p>
+        <h1 className="text-3xl font-bold">Dashboard</h1>
+        <p className="text-gray-600">
+          Welcome back, {session?.user?.email}
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="border-l-4 border-l-blue-500">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">My Applications</CardTitle>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">
+              Total Applications
+            </CardTitle>
+            <FileText className="h-4 w-4 text-gray-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">252</div>
-            <p className="text-xs text-gray-500 mt-1">Your total submissions</p>
+            <div className="text-2xl font-bold">{stats.totalApplications}</div>
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-yellow-500">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Pending Review</CardTitle>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">
+              Pending
+            </CardTitle>
+            <Clock className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-yellow-600">18</div>
-            <p className="text-xs text-gray-500 mt-1">Awaiting admin review</p>
+            <div className="text-2xl font-bold">{stats.pending}</div>
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-green-500">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Accepted</CardTitle>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">
+              Under Review
+            </CardTitle>
+            <Users className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-green-600">142</div>
-            <p className="text-xs text-gray-500 mt-1">56.3% acceptance rate</p>
+            <div className="text-2xl font-bold">{stats.underReview}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">
+              Accepted
+            </CardTitle>
+            <CheckCircle className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.accepted}</div>
           </CardContent>
         </Card>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>My Monthly Submissions</CardTitle>
-          <CardDescription>Your application uploads over the last 6 months</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={agentData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="uploaded" fill="#3b82f6" name="My Submissions" />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
 
       <Card>
         <CardHeader>
           <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>Manage your student applications</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <a href="/dashboard/upload-students" className="p-4 border rounded-lg hover:bg-blue-50 hover:border-blue-500 transition cursor-pointer">
-              <div className="text-3xl mb-2">📤</div>
-              <h3 className="font-semibold mb-1">Upload Students</h3>
-              <p className="text-sm text-gray-600">Submit new student applications</p>
-            </a>
-            <a href="/dashboard/applications" className="p-4 border rounded-lg hover:bg-blue-50 hover:border-blue-500 transition cursor-pointer">
-              <div className="text-3xl mb-2">📋</div>
-              <h3 className="font-semibold mb-1">My Applications</h3>
-              <p className="text-sm text-gray-600">View only your submissions (252)</p>
-            </a>
-            <a href="/dashboard/universities" className="p-4 border rounded-lg hover:bg-blue-50 hover:border-blue-500 transition cursor-pointer">
-              <div className="text-3xl mb-2">🎓</div>
-              <h3 className="font-semibold mb-1">Browse Universities</h3>
-              <p className="text-sm text-gray-600">Explore 217+ partner institutions</p>
-            </a>
-            <a href="/dashboard/profile" className="p-4 border rounded-lg hover:bg-blue-50 hover:border-blue-500 transition cursor-pointer">
-              <div className="text-3xl mb-2">⚙️</div>
-              <h3 className="font-semibold mb-1">Profile Settings</h3>
-              <p className="text-sm text-gray-600">Update your information</p>
-            </a>
-          </div>
+        <CardContent className="space-y-2">
+          <a 
+            href="/dashboard/upload-students" 
+            className="block p-4 border rounded-lg hover:bg-gray-50 transition"
+          >
+            <h3 className="font-semibold">Upload Student Application</h3>
+            <p className="text-sm text-gray-600">Submit new student documents</p>
+          </a>
+          <a 
+            href="/dashboard/applications" 
+            className="block p-4 border rounded-lg hover:bg-gray-50 transition"
+          >
+            <h3 className="font-semibold">View My Applications</h3>
+            <p className="text-sm text-gray-600">Track submission status</p>
+          </a>
+          <a 
+            href="/dashboard/universities" 
+            className="block p-4 border rounded-lg hover:bg-gray-50 transition"
+          >
+            <h3 className="font-semibold">Browse Universities</h3>
+            <p className="text-sm text-gray-600">217+ partner institutions</p>
+          </a>
         </CardContent>
       </Card>
     </div>
