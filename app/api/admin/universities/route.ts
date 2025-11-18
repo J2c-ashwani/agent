@@ -8,7 +8,6 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
-    // Only admins can list agents
     if (!session || (session.user as any).role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -16,28 +15,25 @@ export async function GET(request: NextRequest) {
     const { getDatabase } = await import('@/lib/mongodb')
     const db = await getDatabase()
     
-    const agents = await db.collection('agents')
-      .find({ role: 'agent' })
-      .project({ password: 0 })
+    const universities = await db.collection('universities')
+      .find({})
+      .sort({ name: 1 })
       .toArray()
 
     return NextResponse.json({ 
       success: true,
-      agents: agents.map(a => ({
-        id: a._id.toString(),
-        email: a.email,
-        name: a.name,
-        company: a.company,
-        country: a.country,
-        phone: a.phone,
-        status: a.status,
-        totalApplications: a.totalApplications || 0,
-        acceptedApplications: a.acceptedApplications || 0,
-        createdAt: a.createdAt,
+      universities: universities.map(u => ({
+        id: u._id.toString(),
+        name: u.name,
+        country: u.country,
+        programs: u.programs || [],
+        intakes: u.intakes || [],
+        tuition: u.tuition,
+        requirements: u.requirements,
       }))
     })
   } catch (error: any) {
-    console.error('List agents error:', error)
+    console.error('Fetch universities error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
